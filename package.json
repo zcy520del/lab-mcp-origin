@@ -1,0 +1,33 @@
+{
+  "name": "@zcy520del/lab-mcp-origin",
+  "description": "Drive OriginPro via COM from any agent session: plot XY data, linear fit with R2, export PNG. Ships as a DeepSeek Harness (DSH) plugin exposing an stdio MCP server.",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "server",
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {},
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "mcp",
+    "com",
+    "automation",
+    "origin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zcy520del/lab-mcp-origin.git"
+  },
+  "homepage": "https://github.com/zcy520del/lab-mcp-origin#readme"
+}
