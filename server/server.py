@@ -13,13 +13,36 @@ if LIB not in sys.path:
 
 os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
 
+# Windows 控制台默认 GBK：强制 UTF-8，否则中文报错文本会炸掉 JSON-RPC。
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 
 def _out(sub=""):
-    d = os.environ.get("LAB_OUT_DIR") or os.path.join(os.getcwd(), "lab-out")
-    if sub:
-        d = os.path.join(d, sub)
-    os.makedirs(d, exist_ok=True)
-    return d
+    """输出目录：LAB_OUT_DIR > <cwd>/lab-out（不可写则逐级回退，跨工作区只读 cwd 不崩溃）。"""
+    def _try(base):
+        d = os.path.join(base, sub) if sub else base
+        try:
+            os.makedirs(d, exist_ok=True)
+            probe = os.path.join(d, ".write-test")
+            open(probe, "w").close()
+            os.remove(probe)
+            return d
+        except OSError:
+            return None
+
+    env = os.environ.get("LAB_OUT_DIR")
+    for cand in ([env] if env else []) + [os.path.join(os.getcwd(), "lab-out"),
+                                          os.path.expandvars(r"%LOCALAPPDATA%\lab-out"),
+                                          os.path.join(os.path.expanduser("~"), "Desktop", "ds", "lab-out")]:
+        d = _try(cand)
+        if d:
+            return d
+    import tempfile
+    return tempfile.mkdtemp(prefix="lab-out-")
 
 
 def tool_origin_plot(args):
