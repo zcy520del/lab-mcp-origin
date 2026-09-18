@@ -11,8 +11,9 @@ import time
 import originpro as op
 import win32com.client
 
+
 def _find_origin_exe():
-    """Locate Origin64.exe: ORIGIN_EXE env > registry App Paths > Program Files glob."""
+    """定位 Origin64.exe：环境变量 > 注册表 App Paths > 常见安装目录。"""
     env = os.environ.get("ORIGIN_EXE")
     if env and os.path.exists(env):
         return env
@@ -26,12 +27,18 @@ def _find_origin_exe():
     except OSError:
         pass
     import glob
-    hits = sorted(glob.glob(r"C:\Program Files\OriginLab\Origin*\Origin64.exe")
-                  + glob.glob(r"D:\Program Files\OriginLab\Origin*\Origin64.exe"), reverse=True)
-    return hits[0] if hits else None
+    for pat in (r"C:\Program Files\OriginLab\Origin*\Origin64.exe",
+                r"D:\Program Files\OriginLab\Origin*\Origin64.exe"):
+        hits = sorted(glob.glob(pat), reverse=True)     # 新版本优先
+        if hits:
+            return hits[0]
+    raise RuntimeError("Origin64.exe not found; set ORIGIN_EXE env var to its full path")
 
 
-ORIGIN_EXE = _find_origin_exe()
+try:
+    ORIGIN_EXE = _find_origin_exe()
+except RuntimeError:
+    ORIGIN_EXE = None   # 已开实例 attach 仍可用；冷启动时才报错
 
 
 def _connect() -> bool:
@@ -47,8 +54,8 @@ def ensure_origin(timeout: float = 120.0) -> "op":
     """保证有可连接的 Origin 实例；没有就拉起，返回已 attach 的 originpro 模块。"""
     if not _connect():
         if not ORIGIN_EXE:
-            raise RuntimeError('Origin is not running and Origin64.exe was not found; '
-                               'start Origin manually or set ORIGIN_EXE env var')
+            raise RuntimeError("Origin is not running and Origin64.exe was not found; "
+                               "start Origin manually or set ORIGIN_EXE env var")
         subprocess.Popen([ORIGIN_EXE])
         deadline = time.time() + timeout
         while time.time() < deadline:
